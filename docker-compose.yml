@@ -1,0 +1,56 @@
+version: '3'
+
+services:
+  nodejs:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nodejs
+    container_name: nodejs
+    restart: unless-stopped
+    ports:
+     - "8080:3000"
+    networks:
+      - app-network
+  webserver:
+    image: nginx:stable-alpine
+    container_name: webserver
+    restart: unless-stopped
+    ports: 
+      - "80:80"
+    volumes: 
+      - web-root:/var/www/html
+      - ./nginx-conf:/etc/nginx/conf.d
+    depends_on: 
+      - nodejs
+    networks: 
+      - app-network
+  db:
+    image: mysql:5.7
+    container_name: db
+    restart: unless-stopped
+    ports:
+      - "9999:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_USER=test   #创建test用户
+      - MYSQL_PASSWORD=test123  #设置test用户的密码
+      - TZ=Asia/Shanghai # 设置时区
+    volumes:
+      - ./mysql:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    networks:
+      - app-network
+volumes:
+  certbot-etc:
+  certbot-var:
+  web-root:
+    driver: local
+    driver_opts:
+      type: none
+      device: /Users/liluyao/Desktop/compose/data
+      o: bind
+  
+networks:
+  app-network:
+    driver: bridge  
